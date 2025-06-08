@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Infrastructure.Data;
+using Infrastructure.Repositories;
 using Business.Service;
 
 namespace Business.Services
@@ -7,42 +8,46 @@ namespace Business.Services
     public interface IEventService
     {
         Task<List<EventModel>> GetAllEventsAsync();
-        Task<EventModel?> GetEventByIdAsync(int id);
+        Task<EventModel?> GetEventByIdAsync(string id);
         Task<EventModel> CreateEventAsync(EventModel model);
-        Task<bool> UpdateEventAsync(int id, EventModel model);
-        Task<bool> DeleteEventAsync(int id);
+        Task<bool> UpdateEventAsync(string id, EventModel model);
+        Task<bool> DeleteEventAsync(string id);
     }
 
     public class EventServiceMVP : IEventService
     {
-        private readonly DataContext _context;
+        private readonly IEventRepository _eventRepository;
 
-        public EventServiceMVP(DataContext context)
+        public EventServiceMVP(IEventRepository eventRepository)
         {
-            _context = context;
+            _eventRepository = eventRepository;
         }
 
         public async Task<List<EventModel>> GetAllEventsAsync()
         {
-            return await _context.Events
-                .Select(e => new EventModel
-                {
-                    Id = e.Id,
-                    Image = e.Image,
-                    Name = e.Name,
-                    Date = e.Date,
-                    Location = e.Location,
-                    Description = e.Description,
-                    IsActive = e.IsActive
-                })
-                .ToListAsync();
+            var result = await _eventRepository.GetAllAsync();
+            if (!result.IsSuccess || result.Result == null)
+                return [];
+
+            return result.Result.Select(e => new EventModel
+            {
+                Id = e.Id,
+                Image = e.Image,
+                Name = e.Name,
+                Date = e.Date,
+                Location = e.Location,
+                Description = e.Description,
+                IsActive = e.IsActive
+            }).ToList();
         }
 
-        public async Task<EventModel?> GetEventByIdAsync(int id)
+        public async Task<EventModel?> GetEventByIdAsync(string id)
         {
-            var entity = await _context.Events.FindAsync(id);
-            if (entity == null) return null;
+            var result = await _eventRepository.GetByIdAsync(id);
+            if (!result.IsSuccess || result.Result == null)
+                return null;
 
+            var entity = result.Result;
             return new EventModel
             {
                 Id = entity.Id,
@@ -67,19 +72,20 @@ namespace Business.Services
                 IsActive = model.IsActive
             };
 
-            _context.Events.Add(entity);
-            await _context.SaveChangesAsync();
+            var result = await _eventRepository.AddAsync(entity);
+            if (result.IsSuccess && result.Result != null)
+                model.Id = result.Result.Id;
 
-            model.Id = entity.Id;
             return model;
         }
 
-        public async Task<bool> UpdateEventAsync(int id, EventModel updatedEvent)
+        public async Task<bool> UpdateEventAsync(string id, EventModel updatedEvent)
         {
-            var existingEvent = await _context.Events.FindAsync(id);
-            if (existingEvent == null)
+            var existingResult = await _eventRepository.GetByIdAsync(id);
+            if (!existingResult.IsSuccess || existingResult.Result == null)
                 return false;
 
+            var existingEvent = existingResult.Result;
             existingEvent.Image = updatedEvent.Image;
             existingEvent.Name = updatedEvent.Name;
             existingEvent.Date = updatedEvent.Date;
@@ -87,19 +93,18 @@ namespace Business.Services
             existingEvent.Location = updatedEvent.Location;
             existingEvent.IsActive = updatedEvent.IsActive;
 
-            await _context.SaveChangesAsync();
-            return true;
+            var updateResult = await _eventRepository.UpdateAsync(existingEvent);
+            return updateResult.IsSuccess && updateResult.Result;
         }
 
-        public async Task<bool> DeleteEventAsync(int id)
+        public async Task<bool> DeleteEventAsync(string id)
         {
-            var existingEvent = await _context.Events.FindAsync(id);
-            if (existingEvent == null)
+            var existingResult = await _eventRepository.GetByIdAsync(id);
+            if (!existingResult.IsSuccess || existingResult.Result == null)
                 return false;
 
-            _context.Events.Remove(existingEvent);
-            await _context.SaveChangesAsync();
-            return true;
+            var deleteResult = await _eventRepository.DeleteAsync(existingResult.Result);
+            return deleteResult.IsSuccess && deleteResult.Result;
         }
     }
 }

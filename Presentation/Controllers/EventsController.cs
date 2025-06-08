@@ -18,7 +18,7 @@ namespace Presentation.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetEventById(int id)
+        public async Task<IActionResult> GetEventById(string id)
         {
             var eventModel = await _eventService.GetEventByIdAsync(id);
             if (eventModel == null)

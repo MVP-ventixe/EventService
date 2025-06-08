@@ -2,7 +2,7 @@
 
 public class EventModel
 {
-    public string Id { get; set; } = string.Empty;
+    public string? Id { get; set; }
 
     public string? Image { get; set; }
     public string? Name { get; set; }
