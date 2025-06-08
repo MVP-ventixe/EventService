@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using Presentation.Data;
-using Presentation.Services;
+using Infrastructure.Data;
+using Business.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<IEventService, EventServiceMVP>();
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("EventDataBaseConnection")));
 
