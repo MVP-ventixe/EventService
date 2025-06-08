@@ -6,6 +6,7 @@ using Infrastructure.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IEventService, EventServiceMVP>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddDbContext<DataContext>(options =>
@@ -15,6 +16,13 @@ var app = builder.Build();
 
 
 app.MapOpenApi();
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Event Service API");
+    c.RoutePrefix = string.Empty; 
+});
 app.UseHttpsRedirection();
 app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseAuthentication();

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Business.Services;
+using Business.Models;
 
 namespace Presentation.Controllers
 {
@@ -26,6 +27,20 @@ namespace Presentation.Controllers
                 return NotFound();
             }
             return Ok(eventModel);
+        }
+
+        [HttpPost]
+
+        public async Task<IActionResult> CreateEvent(CreateEventRequest request)
+        {
+            if ( !ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _eventService.CreateEventAsync(request);
+            return result.IsSuccess
+                ? Ok() : StatusCode(500, result.Error);
+
+
         }
     }
 }
