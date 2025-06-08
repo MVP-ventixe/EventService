@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Business.Services;
 using Business.Models;
+using Business.Service;
 
 namespace Presentation.Controllers
 {
@@ -33,14 +34,25 @@ namespace Presentation.Controllers
 
         public async Task<IActionResult> CreateEvent(CreateEventRequest request)
         {
-            if ( !ModelState.IsValid)
+            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _eventService.CreateEventAsync(request);
+            var model = new EventModel
+            {
+                Image = request.Image,
+                Name = request.Name,
+                Date = request.Date,
+                Location = request.Location,
+                Description = request.Description,
+                IsActive = request.IsActive
+            };
+
+            var result = await _eventService.CreateEventAsync(model);
             return result.IsSuccess
-                ? Ok() : StatusCode(500, result.Error);
-
-
+                ? Ok(result)
+                : StatusCode(500, result.ErrorMessage);
         }
+
     }
+    
 }

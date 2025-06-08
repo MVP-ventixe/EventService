@@ -2,6 +2,7 @@
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Business.Service;
+using Infrastructure.Models;
 
 namespace Business.Services
 {
@@ -9,7 +10,8 @@ namespace Business.Services
     {
         Task<List<EventModel>> GetAllEventsAsync();
         Task<EventModel?> GetEventByIdAsync(string id);
-        Task<EventModel> CreateEventAsync(EventModel model);
+        Task<RepositoryResult<EventModel>> CreateEventAsync(EventModel model);
+
         Task<bool> UpdateEventAsync(string id, EventModel model);
         Task<bool> DeleteEventAsync(string id);
     }
@@ -60,7 +62,7 @@ namespace Business.Services
             };
         }
 
-        public async Task<EventModel> CreateEventAsync(EventModel model)
+        public async Task<RepositoryResult<EventModel>> CreateEventAsync(EventModel model)
         {
             var entity = new EventEntity
             {
@@ -73,11 +75,35 @@ namespace Business.Services
             };
 
             var result = await _eventRepository.AddAsync(entity);
-            if (result.IsSuccess && result.Result != null)
-                model.Id = result.Result.Id;
 
-            return model;
+            if (!result.IsSuccess || result.Result == null)
+            {
+                //Tagit hjälp av ChatGPT
+                return new RepositoryResult<EventModel>
+                {
+                    IsSuccess = false,
+                    ErrorMessage = result.ErrorMessage
+                };
+            }
+
+            var createdModel = new EventModel
+            {
+                Id = result.Result.Id,
+                Image = result.Result.Image,
+                Name = result.Result.Name,
+                Date = result.Result.Date,
+                Location = result.Result.Location,
+                Description = result.Result.Description,
+                IsActive = result.Result.IsActive
+            };
+
+            return new RepositoryResult<EventModel>
+            {
+                IsSuccess = true,
+                Result = createdModel
+            };
         }
+
 
         public async Task<bool> UpdateEventAsync(string id, EventModel updatedEvent)
         {
