@@ -6,9 +6,9 @@ namespace Presentation.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class EventsController(EventService eventService) : ControllerBase
+    public class EventsController(IEventService eventService) : ControllerBase
     {
-        private readonly EventService _eventService = eventService;
+        private readonly IEventService _eventService = eventService;
 
         [HttpGet]
         public async Task<IActionResult> GetAllEvents()
