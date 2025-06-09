@@ -15,8 +15,15 @@ namespace Presentation.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllEvents()
         {
-            var events = await _eventService.GetAllEventsAsync();
-            return Ok(events);
+            //Tagit hjälp av ChatGPT
+            var result = await _eventService.GetAllEventsAsync();
+            if (!result.IsSuccess)
+                return StatusCode(500, result.ErrorMessage);
+
+            if (result.Result == null || !result.Result.Any())
+                return NotFound("No events found.");
+
+            return Ok(result.Result);
         }
 
         [HttpGet("{id}")]

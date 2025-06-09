@@ -8,7 +8,7 @@ namespace Business.Services
 {
     public interface IEventService
     {
-        Task<List<EventModel>> GetAllEventsAsync();
+        Task<RepositoryResult<List<EventModel>>> GetAllEventsAsync();
         Task<EventModel?> GetEventByIdAsync(string id);
         Task<RepositoryResult<EventModel>> CreateEventAsync(EventModel model);
 
@@ -25,13 +25,17 @@ namespace Business.Services
             _eventRepository = eventRepository;
         }
 
-        public async Task<List<EventModel>> GetAllEventsAsync()
+        public async Task<RepositoryResult<List<EventModel>>> GetAllEventsAsync()
         {
             var result = await _eventRepository.GetAllAsync();
             if (!result.IsSuccess || result.Result == null)
-                return [];
+                return new RepositoryResult<List<EventModel>>
+                {
+                    IsSuccess = false,
+                    ErrorMessage = result.ErrorMessage
+                };
 
-            return result.Result.Select(e => new EventModel
+            var list = result.Result.Select(e => new EventModel
             {
                 Id = e.Id,
                 Image = e.Image,
@@ -41,6 +45,11 @@ namespace Business.Services
                 Description = e.Description,
                 IsActive = e.IsActive
             }).ToList();
+            return new RepositoryResult<List<EventModel>>
+            {
+                IsSuccess = true,
+                Result = list
+            };
         }
 
         public async Task<EventModel?> GetEventByIdAsync(string id)
